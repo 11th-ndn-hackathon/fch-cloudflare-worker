@@ -2,8 +2,8 @@ addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request))
 });
 
-async function fetchTestbedNodesJson() {
-  const req = new Request("https://ndndemo.arl.wustl.edu/testbed-nodes.json");
+async function fetchTestbedNodesJson(k, lon, lat, cap, ipv4, ipv6) {
+  const req = new Request(`https://fch-dal.ndn.today/api/?k=4&cap=${k}&ipv4=${ipv4}&ipv6=${ipv6}&lon=${lon}&lat=${lat}`)
   req.cf = {
     cacheEverything: true,
     cacheTtl: 300,
@@ -36,6 +36,8 @@ async function handleRequest(req) {
   const rLat = parseFloat(url.searchParams.get("lat"));
   const rLon = parseFloat(url.searchParams.get("lon"));
   const cap = url.searchParams.get("cap") || "udp"; // capability - UDP/TCP/WSS
+  const ipv4 = url.searchParams.get("ipv4");
+  const ipv6 = url.searchParams.get("ipv6");
 
   /**
    * @type [[number, number], Array<{ position:[number,number], site:string }>]
@@ -43,29 +45,13 @@ async function handleRequest(req) {
   const [cPos, nodes] = await Promise.all([
     !(isNaN(rLat) || isNaN(rLon)) ? [rLat, rLon] :
       [req.cf.latitude, req.cf.longitude],
-    fetchTestbedNodesJson(),
+    fetchTestbedNodesJson(k, req.cf.longitude, req.cf.latitude, cap, ipv4, ipv6),
   ]);
-
-  switch(cap) {
-    case "wss":
-      var avail = nodes.filter((n) => n["fch-enabled"] && n["ws-tls"]);
-    case "udp":
-      var avail = nodes.filter((n) => n["fch-enabled"] && !n["ws-tls"]);
-    default:
-      // default is udp
-      var avail = nodes.filter((n) => n["fch-enabled"] && !n["ws-tls"]);
-  }
-
-  avail.sort(({ position: aPos }, { position: bPos }) => {
-    return computeDistance(aPos, cPos) - computeDistance(bPos, cPos);
-  });
-
-  const ret = avail.slice(0, k).map((n) => new URL(n.site).hostname);
-  const res = new Response(`${ret.join()}`);
+  
+  const res = new Response(nodes);
   res.headers.set("Access-Control-Allow-Origin", "*");
   res.headers.set("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS"),
   res.headers.set("Access-Control-Allow-Headers", "Content-Type"),
   res.headers.set("X-FCH-client-pos", `${cPos.join()}`);
   return res;
 }
-
