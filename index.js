@@ -8,7 +8,7 @@ async function fetchTestbedNodesJson(k, lon, lat, cap, ipv4, ipv6) {
     cacheEverything: true,
     cacheTtl: 300,
   };
-  return Object.values(await fetch(req).then((res) => res.json()));
+  return Object.values(await fetch(req).then((res) => res.text()));
 }
 
 /**
