@@ -3,7 +3,7 @@ addEventListener("fetch", event => {
 });
 
 async function fetchTestbedNodesJson(k, lon, lat, cap, ipv4, ipv6) {
-  const req = new Request(`https://fch-dal.ndn.today/api/?k=4&cap=${k}&ipv4=${ipv4}&ipv6=${ipv6}&lon=${lon}&lat=${lat}`)
+  const req = new Request(`https://fch-dal.ndn.today/api/?k=${k}&cap=${cap}&ipv4=${ipv4}&ipv6=${ipv6}&lon=${lon}&lat=${lat}`);`
   req.cf = {
     cacheEverything: true,
     cacheTtl: 300,
